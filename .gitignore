@@ -1,0 +1,16 @@
+# Ignore everything
+/*
+
+# Whitelist Folder info
+!.gitignore
+!README.md
+
+# Except .cs files in Assets
+!*/
+*/*
+!*/Assets/
+*/Assets/*
+!*/Assets/*.cs
+
+# Not the professor directory
+cgcourse/
