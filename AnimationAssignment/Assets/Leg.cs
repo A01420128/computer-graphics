@@ -1,3 +1,11 @@
+// Computer grafics
+// September 4, 2021
+// Animation Assignment Spider
+
+// Javier Flores - A01651678
+// Enrique Orduna - A01027318
+// Jose Javier Tlacuilo - A01420128
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,62 +13,67 @@ using UnityEngine;
 public class Leg
 {
     static int SECTIONS = 3;
+    static int leg_count = 1;
 
-    GameObject[] section;
-    List<Vector3[]> originals;
+    GameObject[] section; // Array of sections
+    List<Vector3[]> originals; // Array of original position of section
 
-    int sAngle;
+    float sAngle; // Max angle of leg z rotation
+    float width; // Section width
+    float length;// Section length
+    Vector3 position; // Initial position of the leg.
+    int posAngle; // Original angle of the leg in z.
+    bool isForward; // Whether the leg starts in a foward position
 
-    float[] sectionRotZ;
-    float[] deltaRotZ;
-    float[] dirZ;
+    // Keeps changes in rotation.
+    float sectionRotZ;
+    float dirZ;
 
-    // Start is called before the first frame update
-    public Leg(int sAngle) // TODO: Send initial translation rotation.
+    // Initializer
+    public Leg(float sAngle, float width, float length, Vector3 position, int posAngle, bool isForward)
     {
         this.sAngle = sAngle;
+        this.width = width;
+        this.length = length;
+        this.position = position;
+        this.posAngle = posAngle;
+        this.isForward = isForward;
+
+        this.sectionRotZ = (isForward) ? -sAngle : -5;
+        this.dirZ = (isForward) ? 1.0f : -1.0f;
 
         section = new GameObject[SECTIONS];
         originals = new List<Vector3[]>();
 
-        sectionRotZ = new float[SECTIONS];
-        deltaRotZ = new float[SECTIONS];
-        dirZ = new float[SECTIONS];
-
         for (int i = 0; i < SECTIONS; i++)
         {
-            // Create sections angles;
-            sectionRotZ[i] = 0;
-            deltaRotZ[i] = 0.1f;
-            dirZ[i] = -1.0f;
-
             // Create leg sections;
             section[i] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            section[i].name = "link"+i;
+            section[i].name = "Leg section #"+leg_count;
+            leg_count++;
             ExtractVertices(section[i], originals);
         }
     }
 
     // Move leg
-    public void Move()
+    public void Move(float speed)
     {
         // Update angles
-        for (int i = 0; i < 3; i++)
-        {
-            int angle = sAngle - (sAngle / 4) * i; // Each section has a different angle.
-            sectionRotZ[i] += dirZ[i] * deltaRotZ[i];
-            if (sectionRotZ[i] < -angle || sectionRotZ[i] > 0) dirZ[i] = -dirZ[i];
-        }
+        sectionRotZ += dirZ * speed;
+        if (sectionRotZ < -sAngle || sectionRotZ > -5) dirZ = -dirZ;
 
         // Create transformations.
-        Matrix4x4 t = Transformations.TranslateM(0.5f, 0, 0);
-        Matrix4x4 r1 = Transformations.RotateM(sectionRotZ[0], Transformations.AXIS.AX_Z);
-        Matrix4x4 r2 = Transformations.RotateM(sectionRotZ[1], Transformations.AXIS.AX_Z);
-        Matrix4x4 r3 = Transformations.RotateM(sectionRotZ[2], Transformations.AXIS.AX_Z);
-        Matrix4x4 s = Transformations.ScaleM(1, 0.2f, 0.2f);
+        Matrix4x4 ot = Transformations.TranslateM(position.x, position.y, position.z);
+        Matrix4x4 or = Transformations.RotateM(posAngle, Transformations.AXIS.AX_Y);
+        Matrix4x4 orZ = Transformations.RotateM(50, Transformations.AXIS.AX_Z);
+        Matrix4x4 t = Transformations.TranslateM(length/2, 0, 0);
+        Matrix4x4 r1 = Transformations.RotateM(sectionRotZ, Transformations.AXIS.AX_Z);
+        Matrix4x4 r2 = Transformations.RotateM(sectionRotZ * 2.3f, Transformations.AXIS.AX_Z);
+        Matrix4x4 r3 = Transformations.RotateM(sectionRotZ * 2.3f, Transformations.AXIS.AX_Z);
+        Matrix4x4 s = Transformations.ScaleM(length, width, width);
 
         // Create per link transformations.
-        Matrix4x4 t1 = r1 * t;
+        Matrix4x4 t1 = ot * or * orZ * r1 * t;
         Matrix4x4 t2 = t1 * t * r2 * t;
         Matrix4x4 t3 = t2 * t * r3 * t;
 
