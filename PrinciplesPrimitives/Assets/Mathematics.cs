@@ -53,4 +53,24 @@ public class Mathematics
         // dot(a, b) = |a|*|b|cos(angle)
         return Mathf.Acos(Dot(Normalized(a),Normalized(b)));
     }
+
+    public static Vector3 Reflect(Vector3 l, Vector3 n)
+    {
+        Vector3 nu = Normalized(n);
+        Vector3 lp = nu * Dot(nu,l);
+        Vector3 lo = l - lp;
+        Vector3 r = lp - lo;
+        return r;
+    }
+
+    public static Vector3 SphericalToCartesian(float i, float a, float r)
+    {
+        float inclination = i * Mathf.Deg2Rad;
+        float azimuth = i * Mathf.Deg2Rad;
+        Vector3 xyz = Vector3.zero;
+        xyz.x = r*Mathf.Sin(inclination)*Mathf.Sin(azimuth);
+        xyz.y = r*Mathf.Cos(azimuth);
+        xyz.z = r*Mathf.Sin(inclination)*Mathf.Cos(azimuth);
+        return xyz;
+    }
 }
