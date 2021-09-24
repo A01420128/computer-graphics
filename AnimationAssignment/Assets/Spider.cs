@@ -30,6 +30,7 @@ public class Spider : MonoBehaviour
     {
         body = new BodySphere();
         // Leg(float sAngle, float deltaRotZ, float width, float length, Vector3 position, int posAngle, bool isForward)
+        // H = head, B = Body, F = front B = back, L = left, R = right
         legHFL = new Leg(30f, 0.125f, 0.7f, new Vector3(0.30f, 0, 0.625f), -45, false);
         legHFR = new Leg(30f, 0.125f, 0.7f, new Vector3(-0.30f, 0, 0.625f), -135, true);
 
@@ -41,16 +42,20 @@ public class Spider : MonoBehaviour
 
         legBBL = new Leg(30f, 0.125f, 0.9f, new Vector3(0.30f, 0, -0.125f), 45, true);
         legBBR = new Leg(30f, 0.125f, 0.9f, new Vector3(-0.30f, 0, -0.125f), 135, false);
+
+        this.legSpeed = 1.0f;
     }
 
     // Update is called once per frame
     void Update()
     {
+        // Move all head legs.
         legHFL.Move(legSpeed);
         legHFR.Move(legSpeed);
         legHBL.Move(legSpeed);
         legHBR.Move(legSpeed);
 
+        // Move all back legs.
         legBFL.Move(legSpeed);
         legBFR.Move(legSpeed);
         legBBL.Move(legSpeed);

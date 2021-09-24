@@ -39,6 +39,7 @@ public class Leg
         this.posAngle = posAngle;
         this.isForward = isForward;
 
+        // Some legs start in the forward position others dont.
         this.sectionRotZ = (isForward) ? -sAngle : -5;
         this.dirZ = (isForward) ? 1.0f : -1.0f;
 
@@ -58,22 +59,32 @@ public class Leg
     // Move leg
     public void Move(float speed)
     {
-        // Update angles
+        // Update angles for section rotations.
         sectionRotZ += dirZ * speed;
         if (sectionRotZ < -sAngle || sectionRotZ > -5) dirZ = -dirZ;
 
+        // Leg rotation in Y to show forward movement.
+        float angleInY = (position.x < 0) ? -sectionRotZ/2.5f : sectionRotZ/2.5f;
+        Matrix4x4 rY = Transformations.RotateM(angleInY, Transformations.AXIS.AX_Y);
+
         // Create transformations.
+
+        // Sets original position of the leg.
         Matrix4x4 ot = Transformations.TranslateM(position.x, position.y, position.z);
+        // Sets original position of the leg around the body.
         Matrix4x4 or = Transformations.RotateM(posAngle, Transformations.AXIS.AX_Y);
+        // Sets an original inclination of the leg.
         Matrix4x4 orZ = Transformations.RotateM(50, Transformations.AXIS.AX_Z);
+        // Calculated translation and rotation of each section
         Matrix4x4 t = Transformations.TranslateM(length/2, 0, 0);
         Matrix4x4 r1 = Transformations.RotateM(sectionRotZ, Transformations.AXIS.AX_Z);
         Matrix4x4 r2 = Transformations.RotateM(sectionRotZ * 2.3f, Transformations.AXIS.AX_Z);
         Matrix4x4 r3 = Transformations.RotateM(sectionRotZ * 2.3f, Transformations.AXIS.AX_Z);
+        // Scale of the sections.
         Matrix4x4 s = Transformations.ScaleM(length, width, width);
 
         // Create per link transformations.
-        Matrix4x4 t1 = ot * or * orZ * r1 * t;
+        Matrix4x4 t1 = rY * ot * or * orZ * r1 * t;
         Matrix4x4 t2 = t1 * t * r2 * t;
         Matrix4x4 t3 = t2 * t * r3 * t;
 

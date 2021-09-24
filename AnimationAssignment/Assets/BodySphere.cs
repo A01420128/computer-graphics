@@ -19,13 +19,13 @@ public class BodySphere
         GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         head.name = "Spider head";
         Vector3[] vh = ExtractVertices(head);
-        Matrix4x4 th = Transformations.TranslateM(0, 0.1f, 0.5f);
+        Matrix4x4 th = Transformations.TranslateM(0, 0.2f, 0.5f);
         Matrix4x4 sh = Transformations.ScaleM(1f, 1f, 1.15f);
 
         GameObject body = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         body.name = "Spider body";
         Vector3[] vb = ExtractVertices(body);
-        Matrix4x4 tb = Transformations.TranslateM(0, 0.35f, -0.5f);
+        Matrix4x4 tb = Transformations.TranslateM(0, 0.45f, -0.5f);
         Matrix4x4 sb = Transformations.ScaleM(1.5f, 1.5f, 1.75f);
 
         ApplyTransformations(head, th, vh);
