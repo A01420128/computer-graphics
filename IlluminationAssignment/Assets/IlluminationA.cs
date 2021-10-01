@@ -141,10 +141,10 @@ public class IlluminationA : MonoBehaviour
     }
 
     void DisplayVectors(IlluminationData data) {
-        Debug.DrawLine(data.PoI, data.PoI + data.n, Color.red);
-        Debug.DrawLine(data.PoI, data.PoI + data.l, Color.yellow);
-        Debug.DrawLine(data.PoI, data.PoI + data.v, Color.blue);
-        Debug.DrawLine(data.PoI, data.PoI + data.r, Color.cyan);
+        Debug.DrawLine(data.PoI, data.PoI + data.n, Color.blue);
+        Debug.DrawLine(data.PoI, data.PoI + data.l, Color.red);
+        Debug.DrawLine(data.PoI, data.PoI + data.v, Color.green);
+        Debug.DrawLine(data.PoI, data.PoI + data.r, Color.white);
     }
 }
 
