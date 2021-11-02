@@ -44,7 +44,7 @@ public class IlluminationA : MonoBehaviour
 
     void DisplaySphere(IlluminationData data) {
         Matrix4x4 tm = Transformations.TranslateM(data.TA.x, data.TA.y, data.TA.z);
-        Vector4 A2 = new Vector4(data.A.x, data.A.y, data.A.z, 1);
+        Vector4 A2 = new Vector4(data.Ap.x, data.Ap.y, data.Ap.z, 1);
         Vector4 A3 = tm * A2;
 
         Matrix4x4 rm;
@@ -62,12 +62,12 @@ public class IlluminationA : MonoBehaviour
         }
 
         // Take to the origin.
-        Matrix4x4 tm2 = Transformations.TranslateM(-data.P.x, -data.P.y, -data.P.z);
+        Matrix4x4 tm2 = Transformations.TranslateM(-data.Piv.x, -data.Piv.y, -data.Piv.z);
         Vector4 A4 = tm2 * A3;
         // Rotate
         Vector4 A5 = rm * A4;
         // Take back:
-        Matrix4x4 tm3 = Transformations.TranslateM(data.P.x, data.P.y, data.P.z);
+        Matrix4x4 tm3 = Transformations.TranslateM(data.Piv.x, data.Piv.y, data.Piv.z);
         data.CENTER = tm3 * A5;
 
         Vector3 cartesian = Mathematics.SphericalToCartesian(data.inc, data.azi, data.sphradius);
@@ -103,15 +103,19 @@ public class IlluminationA : MonoBehaviour
         data.sg = data.ks.y * data.Is.y * dvra;
         data.sb = data.ks.z * data.Is.z * dvra;
 
-        //Texture
+        //Texture calculation.
         int TEXTURE_SIDE = 5;
         data.uv = Mathematics.SphericalMapping(nu);
         int s = (int)(data.uv.x * TEXTURE_SIDE);
         int t = TEXTURE_SIDE - (int)(data.uv.y * TEXTURE_SIDE) - 1;
-        Vector3 textRGB = data.texturaArray[t, s];
-        data.texturePatch = data.texturasLetras[t, s];
+        int idx = t*TEXTURE_SIDE + s;
+        // Getting letter and values of texture from data class.
+        Vector3 textRGB = data.texturaArray[idx];
+        data.texturePatch = data.texturasLetras[idx];
 
 
+
+        // .45 .44. 44
         // Final color with textures
         data.finalColor = new Vector3((data.ar+data.dr+data.sr)* textRGB.x, (data.ag+data.dg+data.sg) * textRGB.y, (data.ab+data.db+data.sb) * textRGB.z);
 
@@ -123,9 +127,6 @@ public class IlluminationA : MonoBehaviour
         string hexG = hG.ToString("X2");
         string hexB = hB.ToString("X2");
         data.hexColor = "#" + hexR + hexG + hexB;
-        // Expected: 0.35346 0.39961 0.74096
-
-        
 
         GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         sphere.transform.position = data.CENTER;
@@ -221,14 +222,14 @@ public class IlluminationData {
     public string dataName;
 
     public Vector3 A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y;
-    public Vector3[,] texturaArray;
+    public Vector3[] texturaArray;
     public string texturePatch;
-    public string[,] texturasLetras = new string[,] {
-        {"A", "B", "C", "D", "E"},
-        {"F", "G", "H", "I", "J"},
-        {"K", "L", "M", "N", "O"},
-        {"P", "Q", "R", "S", "T"},
-        {"U", "V", "W", "X", "Y"}
+    public string[] texturasLetras = new string[] {
+        "A", "B", "C", "D", "E",
+        "F", "G", "H", "I", "J",
+        "K", "L", "M", "N", "O",
+        "P", "Q", "R", "S", "T",
+        "U", "V", "W", "X", "Y"
     };
 
     public IlluminationData(string who) {
@@ -287,11 +288,7 @@ public class IlluminationData {
                 X = new Vector3(0.96322f, 0.84937f, 0.97313f);
                 Y = new Vector3(0.60502f, 0.87742f, 0.95177f);
 
-                texturaArray = new Vector3[,] { { A, B, C, D, E },
-                                                { F, G, H, I, J },
-                                                { K, L, M, N, O },
-                                                { P, Q, R, S, T },
-                                                { U, V, W, X, Y }};
+                texturaArray = new Vector3[] { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y};
                 textureIdx = 0;
                 break;
             case "javier":
@@ -350,11 +347,7 @@ public class IlluminationData {
                 X = new Vector3(0.87701f, 0.70825f, 0.73624f);
                 Y = new Vector3(0.86193f, 0.62384f, 0.77986f);
 
-                texturaArray = new Vector3[,] { { A, B, C, D, E },
-                                                { F, G, H, I, J },
-                                                { K, L, M, N, O },
-                                                { P, Q, R, S, T },
-                                                { U, V, W, X, Y }};
+                texturaArray = new Vector3[] { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y};
 
                 textureIdx = 1;
                 break;
@@ -411,11 +404,7 @@ public class IlluminationData {
                 X =  new Vector3(0.62760f,  0.75872f,  0.61197f);
                 Y =  new Vector3(0.81159f,  0.77272f,  0.95221f);
 
-                texturaArray = new Vector3[,] { { A, B, C, D, E },
-                                                { F, G, H, I, J },
-                                                { K, L, M, N, O },
-                                                { P, Q, R, S, T },
-                                                { U, V, W, X, Y }};
+                texturaArray = new Vector3[] { A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y};
 
                 textureIdx = 2;
                 break;
