@@ -17,7 +17,7 @@ public class TankController : MonoBehaviour
     void Start()
     {
         speed = 1.0f;
-        rotationSpeed = 15.0f;
+        rotationSpeed = -15.0f;
 
         pastTs = Matrix4x4.identity;
         cannonPoint = new Vector3(0, 1.0f, 0.5f);
@@ -28,11 +28,10 @@ public class TankController : MonoBehaviour
         sphere.transform.localPosition = cannonPoint;
 
         Mesh m = GetComponent<MeshFilter>().mesh;
-        originals = new Vector3[m.vertices.Length];
-        for (int i = 0; i < m.vertices.Length; i++)
-        {
-            originals[i] = m.vertices[i];
-        }
+
+        // Can this be changed to originals = m.vertices;
+        Debug.Log(m.vertices.Length);
+        originals = m.vertices;
     }
 
     // Update is called once per frame
