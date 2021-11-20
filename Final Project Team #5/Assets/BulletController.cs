@@ -12,6 +12,7 @@ public class BulletController : MonoBehaviour
     public Vector3 prev;   // previous position
     public Color color;
     public bool colliding;
+    public int timesBounced;
 
     public Vector3 forces;
     public Vector3 cannonForce;
@@ -24,22 +25,21 @@ public class BulletController : MonoBehaviour
     {
     }
 
-    public void SetUp(Vector3 cannonForce) {
+    public void SetUp(Vector3 cannonForce, Color color) {
         this.launchTime = Time.realtimeSinceStartup;
         this.cannonForce = cannonForce;
+        this.timesBounced = 0;
 
         forces.y = -mass * 9.81f;
         forces.x = cannonForce.x;
         forces.z = cannonForce.z;
 
-        Debug.Log("Fx: " + forces.x + "Fz: " + forces.z);
-
         sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         sphere.transform.localScale = new Vector3(r*2, r*2, r*2);
         sphere.transform.localPosition = cpos;
         Renderer cr = sphere.GetComponent<Renderer>();
-        color = new Color(Random.Range(0.5f, 1.0f), Random.Range(0.5f, 1.0f), Random.Range(0.5f, 1.0f));
-        cr.material.SetColor("_Color", color);
+        this.color = color;
+        cr.material.SetColor("_Color", this.color);
     }
 
     // The machine doesnt know when we reach the floor.
@@ -55,15 +55,14 @@ public class BulletController : MonoBehaviour
             // Invert the vertical forces.
             // minus whatever the restitution is going to take
             forces.y = -forces.y * restitution;
+            timesBounced += 1;
         }
     }
 
     public bool CheckCollision(TankController tank)
     {
-        Debug.Log("Tanbk:" +tank.centerPoint + "Cpos:" + cpos);
         float sumR = r + tank.collisionRadius;
         sumR *= sumR;
-        Debug.Log("SumR:" + sumR);
         Vector3 c1 = cpos;
         Vector3 c2 = tank.centerPoint;
 
@@ -74,8 +73,6 @@ public class BulletController : MonoBehaviour
         float dz = c2.z - c1.z;
         dz *= dz;
         float d2 = dx + dy + dz;
-
-        Debug.Log("SumR:" + sumR + "d2: " + d2);
 
         return sumR >= d2; // true when theres a collision
     }

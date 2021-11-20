@@ -4,6 +4,14 @@ using UnityEngine;
 
 public class TankController : MonoBehaviour
 {
+    float CANNON_ANGLE_STEP = 2.0f;
+    float CANNON_ANGLE_START = 30.0f;
+    float CANNON_ANGLE_END = 60.0f;
+
+    float CANNON_VEL_STEP = 0.5f;
+    float CANNON_VEL_START = 1.0f;
+    float CANNON_VEL_END = 5.0f;
+
     Camera mainCamera;
     Vector3 cameraPoint;
     public Vector3 originalCameraPoint;
@@ -21,14 +29,13 @@ public class TankController : MonoBehaviour
     Vector3 cannonPoint;
     public Vector3 originalCannonPoint;
     public float tankYRotation;
+    public float cannonAngle;
+    public float cannonVelocity;
 
     // Bullet
     private BulletController bullet;
-
-    enum WeaponType
-    {
-        Type1,
-    }
+    private WeaponType[] weapons;
+    public WeaponType currentWeapon;
 
     // Start is called before the first frame update
     void Start()
@@ -38,22 +45,26 @@ public class TankController : MonoBehaviour
         rotationSpeed = -15.0f;
         float longitud = GetComponent<MeshFilter>().mesh.bounds.size.z;
         collisionRadius = longitud;
+        cannonAngle = CANNON_ANGLE_START;
+        cannonVelocity = CANNON_VEL_START;
+        weapons = WeaponType.GetAllWeapons();
+        currentWeapon = weapons[0];
 
         pastTs = Matrix4x4.identity;
         centerPoint = Vector3.zero;
         cannonPoint = new Vector3(0, 1.0f, 0.5f);
-        cameraPoint = new Vector3(0, 4.0f, -10.0f);
+        cameraPoint = new Vector3(0, 3.0f, -20.0f);
         originalCenterPoint = centerPoint;
         originalCannonPoint = cannonPoint;
         originalCameraPoint = cameraPoint;
 
         mainCamera.transform.position = cameraPoint;
         mainCamera.transform.LookAt(cannonPoint);
+        mainCamera.fieldOfView = 30.0f;
 
         Mesh m = GetComponent<MeshFilter>().mesh;
 
         // Can this be changed to originals = m.vertices;
-        Debug.Log(m.vertices.Length);
         originals = m.vertices;
     }
 
@@ -73,36 +84,57 @@ public class TankController : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.Equals))
             {
-                Debug.Log("Changed bullet vertical angle ++");
+                if (cannonAngle + CANNON_ANGLE_STEP <= CANNON_ANGLE_END)
+                {
+                    cannonAngle += CANNON_ANGLE_STEP;
+                }
+                Debug.Log("Changed bullet vertical angle ++ to: " + cannonAngle);
             } else if (Input.GetKeyDown(KeyCode.Minus))
             {
-                Debug.Log("Changed bullet vertical angle --");
+                if (cannonAngle - CANNON_ANGLE_STEP >= CANNON_ANGLE_START)
+                {
+                    cannonAngle -= CANNON_ANGLE_STEP;
+                }
+                Debug.Log("Changed bullet vertical angle -- to: " + cannonAngle);
             }
         } else if (Input.GetKeyDown(KeyCode.Space))
         {
             Debug.Log("Started shooting.");
-            Shoot(WeaponType.Type1);
+            Shoot(currentWeapon);
         } else if (Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.Equals))
         {
-            Debug.Log("Changed initial bullet velocity ++");
+            if (cannonVelocity + CANNON_VEL_STEP <= CANNON_VEL_END)
+            {
+                cannonVelocity += CANNON_VEL_STEP;
+            }
+            Debug.Log("Changed initial bullet velocity ++ to: " + cannonVelocity);
         } else if (Input.GetKeyDown(KeyCode.Minus))
         {
-            Debug.Log("Changed initial bullet velocity --");
+            if (cannonVelocity - CANNON_VEL_STEP >= CANNON_VEL_START)
+            {
+                cannonVelocity -= CANNON_VEL_STEP;
+            }
+            Debug.Log("Changed initial bullet velocity -- to: " + cannonVelocity);
         } else if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             Debug.Log("Switched to weapon 1");
+            currentWeapon = weapons[0];
         } else if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             Debug.Log("Switched to weapon 2");
+            currentWeapon = weapons[1];
         } else if (Input.GetKeyDown(KeyCode.Alpha3))
         {
             Debug.Log("Switched to weapon 3");
+            currentWeapon = weapons[2];
         } else if (Input.GetKeyDown(KeyCode.Alpha4))
         {
             Debug.Log("Switched to weapon 4");
+            currentWeapon = weapons[3];
         } else if (Input.GetKeyDown(KeyCode.Alpha5))
         {
             Debug.Log("Switched to weapon 5");
+            currentWeapon = weapons[4];
         }
     }
 
@@ -146,33 +178,27 @@ public class TankController : MonoBehaviour
 
     void Shoot(WeaponType weapon)
     {
-        bullet = gameObject.AddComponent<BulletController>();
-        bullet.mass = 10.0f;
-        bullet.r = 0.5f;
-        bullet.restitution = 0.00001f;
-        bullet.cpos = cannonPoint;
-        bullet.prev = bullet.cpos;
-        bullet.colliding = false;
-
-        float cannonForceMag;
-        switch (weapon)
+        if (bullet == null && weapon.ammo > 0)
         {
-            case WeaponType.Type1:
-                cannonForceMag = 19.0f;
-                break;
-            default:
-                cannonForceMag = 0.0f;
-                break;
+            bullet = gameObject.AddComponent<BulletController>();
+            bullet.mass = 10.0f;
+            bullet.r = 0.2f * currentWeapon.size;
+            bullet.restitution = 0.00001f;
+            bullet.cpos = cannonPoint;
+            bullet.prev = bullet.cpos;
+            bullet.colliding = false;
+            bullet.SetUp(GetCannonForce(weapon.velocity), currentWeapon.color);
+            weapon.ammo -= 1;
         }
-        bullet.SetUp(GetCannonForce(cannonForceMag));
     }
 
     // Dividing cannon force in its three components.
     Vector3 GetCannonForce(float mag) {
-        float thisAngle = this.tankYRotation * Mathf.Deg2Rad;
-        float x = Mathf.Sin(thisAngle) * mag;
-        float z = Mathf.Cos(thisAngle) * mag;
-        float y = mag;
+        float tankRot = this.tankYRotation * Mathf.Deg2Rad;
+        float cannonRot = this.cannonAngle * Mathf.Deg2Rad;
+        float x = Mathf.Sin(tankRot) * mag * cannonVelocity;
+        float z = Mathf.Cos(tankRot) * mag * cannonVelocity;
+        float y = Mathf.Sin(cannonRot) * mag;
         return new Vector3(x, y, z);
     }
 
@@ -184,7 +210,14 @@ public class TankController : MonoBehaviour
             {
                 if (bullet.CheckCollision(tank))
                 {
-                    Debug.Log("Collided with tank");
+                    Debug.Log("Collided with tank with damage: " + currentWeapon.damage);
+                }
+                if (bullet.timesBounced >= 2)
+                {
+                    Debug.Log("Bullet destroyed");
+                    Destroy(bullet.sphere);
+                    Destroy(bullet);
+                    bullet = null;
                 }
             }
         }
@@ -259,4 +292,45 @@ public class TankController : MonoBehaviour
         mainCamera.transform.position = cameraPoint;
         mainCamera.transform.LookAt(cannonPoint);
     }
+}
+
+public class WeaponType
+{
+
+    public float damage;
+    public int ammo;
+    public float velocity;
+    public float size;
+    public Color color;
+    public WeaponTypeEnum type;
+
+
+    public WeaponType(float damage, int ammo, float velocity, float size, Color color, WeaponTypeEnum type)
+    {
+        this.damage = damage;
+        this.ammo = ammo;
+        this.velocity = velocity;
+        this.size = size;
+        this.color = color;
+        this.type = type;
+    }
+
+    public static WeaponType[] GetAllWeapons()
+    {
+        WeaponType Weapon1 = new WeaponType(20, 1000, 40.0f, 1.0f, Color.white, WeaponTypeEnum.Type1);
+        WeaponType Weapon2 = new WeaponType(40, 10, 38.0f, 1.4f, Color.yellow, WeaponTypeEnum.Type2);
+        WeaponType Weapon3 = new WeaponType(60, 5, 36.0f, 1.8f, Color.red, WeaponTypeEnum.Type3);
+        WeaponType Weapon4 = new WeaponType(80, 3, 34.0f, 2.2f, Color.blue, WeaponTypeEnum.Type4);
+        WeaponType Weapon5 = new WeaponType(100, 1, 32.0f, 2.6f, Color.black, WeaponTypeEnum.Type5);
+        return new WeaponType[] {Weapon1, Weapon2, Weapon3, Weapon4, Weapon5};
+    }
+}
+
+public enum WeaponTypeEnum
+{
+    Type1,
+    Type2,
+    Type3,
+    Type4,
+    Type5,
 }
