@@ -4,28 +4,51 @@ using UnityEngine;
 
 public class TankController : MonoBehaviour
 {
+    Camera mainCamera;
+    Vector3 cameraPoint;
+    public Vector3 originalCameraPoint;
+
+    public bool isPlaying;
+
     public float speed;
     public float rotationSpeed;
     public Matrix4x4 pastTs;
     public Vector3[] originals;
+    public Vector3 centerPoint;
+    public Vector3 originalCenterPoint;
+    public float collisionRadius;
 
     Vector3 cannonPoint;
-    GameObject sphere;
-    public Vector3 originalCannon;
+    public Vector3 originalCannonPoint;
+    public float tankYRotation;
+
+    // Bullet
+    private BulletController bullet;
+
+    enum WeaponType
+    {
+        Type1,
+    }
 
     // Start is called before the first frame update
     void Start()
     {
+        mainCamera = GameObject.Find("Main Camera").GetComponent<Camera>(); 
         speed = 1.0f;
         rotationSpeed = -15.0f;
+        float longitud = GetComponent<MeshFilter>().mesh.bounds.size.z;
+        collisionRadius = longitud;
 
         pastTs = Matrix4x4.identity;
+        centerPoint = Vector3.zero;
         cannonPoint = new Vector3(0, 1.0f, 0.5f);
-        originalCannon = cannonPoint;
+        cameraPoint = new Vector3(0, 4.0f, -10.0f);
+        originalCenterPoint = centerPoint;
+        originalCannonPoint = cannonPoint;
+        originalCameraPoint = cameraPoint;
 
-        sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        sphere.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-        sphere.transform.localPosition = cannonPoint;
+        mainCamera.transform.position = cameraPoint;
+        mainCamera.transform.LookAt(cannonPoint);
 
         Mesh m = GetComponent<MeshFilter>().mesh;
 
@@ -37,7 +60,55 @@ public class TankController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-       if (Input.GetKey(KeyCode.LeftShift))
+        if (isPlaying)
+        {
+            DetectMovement();
+            DetectBulletAction();
+        }
+    }
+
+    void DetectBulletAction()
+    {
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+        {
+            if (Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.Equals))
+            {
+                Debug.Log("Changed bullet vertical angle ++");
+            } else if (Input.GetKeyDown(KeyCode.Minus))
+            {
+                Debug.Log("Changed bullet vertical angle --");
+            }
+        } else if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Debug.Log("Started shooting.");
+            Shoot(WeaponType.Type1);
+        } else if (Input.GetKeyDown(KeyCode.Plus) || Input.GetKeyDown(KeyCode.Equals))
+        {
+            Debug.Log("Changed initial bullet velocity ++");
+        } else if (Input.GetKeyDown(KeyCode.Minus))
+        {
+            Debug.Log("Changed initial bullet velocity --");
+        } else if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            Debug.Log("Switched to weapon 1");
+        } else if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            Debug.Log("Switched to weapon 2");
+        } else if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            Debug.Log("Switched to weapon 3");
+        } else if (Input.GetKeyDown(KeyCode.Alpha4))
+        {
+            Debug.Log("Switched to weapon 4");
+        } else if (Input.GetKeyDown(KeyCode.Alpha5))
+        {
+            Debug.Log("Switched to weapon 5");
+        }
+    }
+
+    void DetectMovement()
+    {
+       if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
        {
            if (Input.GetKeyDown(KeyCode.A)) 
            {
@@ -73,6 +144,52 @@ public class TankController : MonoBehaviour
        }
     }
 
+    void Shoot(WeaponType weapon)
+    {
+        bullet = gameObject.AddComponent<BulletController>();
+        bullet.mass = 10.0f;
+        bullet.r = 0.5f;
+        bullet.restitution = 0.00001f;
+        bullet.cpos = cannonPoint;
+        bullet.prev = bullet.cpos;
+        bullet.colliding = false;
+
+        float cannonForceMag;
+        switch (weapon)
+        {
+            case WeaponType.Type1:
+                cannonForceMag = 19.0f;
+                break;
+            default:
+                cannonForceMag = 0.0f;
+                break;
+        }
+        bullet.SetUp(GetCannonForce(cannonForceMag));
+    }
+
+    // Dividing cannon force in its three components.
+    Vector3 GetCannonForce(float mag) {
+        float thisAngle = this.tankYRotation * Mathf.Deg2Rad;
+        float x = Mathf.Sin(thisAngle) * mag;
+        float z = Mathf.Cos(thisAngle) * mag;
+        float y = mag;
+        return new Vector3(x, y, z);
+    }
+
+    public void CheckHits(TankController[] oponents)
+    {
+        if (bullet != null)
+        {
+            foreach(TankController tank in oponents)
+            {
+                if (bullet.CheckCollision(tank))
+                {
+                    Debug.Log("Collided with tank");
+                }
+            }
+        }
+    }
+
     void Rotate(string direction)
     {
         Matrix4x4 rm;
@@ -80,9 +197,11 @@ public class TankController : MonoBehaviour
         {
             case "A":
                 rm = Transformations.RotateM(rotationSpeed, Transformations.AXIS.AX_Y);
+                this.tankYRotation += rotationSpeed;
                 break;
             case "D":
                 rm = Transformations.RotateM(-rotationSpeed, Transformations.AXIS.AX_Y);
+                this.tankYRotation -= rotationSpeed;
                 break;
             default:
                 rm = Transformations.RotateM(0, Transformations.AXIS.AX_Y);
@@ -128,9 +247,16 @@ public class TankController : MonoBehaviour
         }
         m.vertices = transform;
 
+        Vector4 tempPointCenter = new Vector4(originalCenterPoint.x, originalCenterPoint.y, originalCenterPoint.z, 1);
+        centerPoint = pastTs * tempPointCenter;
+
         // Set cannon point
-        Vector4 tempPoint = new Vector4(originalCannon.x, originalCannon.y, originalCannon.z, 1);
+        Vector4 tempPoint = new Vector4(originalCannonPoint.x, originalCannonPoint.y, originalCannonPoint.z, 1);
         cannonPoint = pastTs * tempPoint;
-        sphere.transform.localPosition = cannonPoint;
+
+        Vector4 tempPointCamera = new Vector4(originalCameraPoint.x, originalCameraPoint.y, originalCameraPoint.z, 1);
+        cameraPoint = pastTs * tempPointCamera;
+        mainCamera.transform.position = cameraPoint;
+        mainCamera.transform.LookAt(cannonPoint);
     }
 }

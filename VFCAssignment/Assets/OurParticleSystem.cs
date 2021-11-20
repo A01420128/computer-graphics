@@ -11,14 +11,26 @@ public class OurParticleSystem : MonoBehaviour
     Camera VFCCam;
 
     float ROTATION_STEP = 10.0f;
+    float farD;
 
     void PerformVFC()
     {
         float nearD = VFCCam.nearClipPlane;
-        float farD = VFCCam.farClipPlane;
-        float w = VFCCam.pixelWidth;
-        float h = VFCCam.pixelHeight;
+        farD = VFCCam.farClipPlane;
         Vector3 CAMERA = VFCCam.transform.localPosition;
+        // float h = VFCCam.pixelHeight;
+        // float w = VFCCam.pixelWidth;
+        //  W: 474, 546 not fitting to camera fustrum in scene.
+
+        // Calculatig fustrum size at farD distance
+        Vector3[] corners = new Vector3[4];
+        VFCCam.CalculateFrustumCorners( new Rect( 0, 0, 1, 1 ), farD, Camera.MonoOrStereoscopicEye.Mono, corners);
+        float heightFustrum = ( corners[0] - corners[1] ).magnitude;
+        float widthFustrum = ( corners[1] - corners[2] ).magnitude;
+
+        float w = widthFustrum;
+        float h = heightFustrum;
+
         Vector3 CAMxu = VFCCam.transform.right;
         Vector3 CAMyu = VFCCam.transform.up;
         Vector3 CAMzu = VFCCam.transform.forward;
@@ -58,6 +70,8 @@ public class OurParticleSystem : MonoBehaviour
 
         auxCam.transform.position = new Vector3(0, 5f, -10.0f);
         VFCCam.transform.position = new Vector3(0, 5f, 0);
+        farD = VFCCam.farClipPlane;
+        Debug.Log(farD);
 
         // Aux cam is the one viewing the scene.
         auxCam.enabled = true;
@@ -78,7 +92,7 @@ public class OurParticleSystem : MonoBehaviour
             p.mass = 10.0f;
             p.r = Random.Range(0.5f, 2.0f);
             p.restitution = 0.9f;
-            p.cpos = new Vector3(Random.Range(-10.0f, 10.0f), VFCCam.transform.localPosition.y, Random.Range(-10.0f, 10.0f));
+            p.cpos = new Vector3(Random.Range(-farD, farD), VFCCam.transform.localPosition.y, Random.Range(-farD, farD));
             p.prev = p.cpos;
             p.colliding = false;
             p.SetUp();
