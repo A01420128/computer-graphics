@@ -11,6 +11,7 @@
 !*/Assets/
 */Assets/*
 !*/Assets/*.cs
+!*/Assets/Scripts/*.cs
 
 # Not the professor directory
 cgcourse/
