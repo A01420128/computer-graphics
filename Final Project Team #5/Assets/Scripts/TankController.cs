@@ -329,6 +329,7 @@ public class TankController : MonoBehaviour
             transform[i] = allPastTransformations * temp;
         }
         m.vertices = transform;
+        m.RecalculateBounds();
 
         Vector4 tempPointCenter = new Vector4(originalCenterPoint.x, originalCenterPoint.y, originalCenterPoint.z, 1);
         centerPoint = allPastTransformations * tempPointCenter;

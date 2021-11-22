@@ -88,6 +88,7 @@ public class GameManager : MonoBehaviour
             transform[i] = st * temp;
         }
         mt.vertices = transform;
+        mt.RecalculateBounds();
     }
 
     private void DisplayPlayerInfo()
