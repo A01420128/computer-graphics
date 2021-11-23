@@ -34,6 +34,8 @@ public class TankController : MonoBehaviour
     public Vector3 centerPoint;
     public Vector3 originalCenterPoint;
     public float collisionRadius;
+    private string previousMove;
+    public bool isCrashed;
 
     public Vector3 cannonPoint;
     public Vector3 originalCannonPoint;
@@ -65,6 +67,8 @@ public class TankController : MonoBehaviour
         cannonVelocity = CANNON_VEL_START;
         weapons = WeaponType.GetAllWeapons();
         currentWeapon = weapons[0];
+        previousMove = "";
+        isCrashed = false;
 
         allPastTransformations = Matrix4x4.identity;
 
@@ -251,6 +255,7 @@ public class TankController : MonoBehaviour
     {
         if (bullet != null)
         {
+            // Check for bullet collisions.
             foreach(TankController tank in oponents)
             {
                 if (bullet.CheckCollision(tank))
@@ -269,12 +274,20 @@ public class TankController : MonoBehaviour
                     return true;
                 }
             }
+        } else {
+            // Check for crashes with tank.
+            foreach(TankController tank in oponents)
+            {
+                CheckCrash(tank);
+            }
         }
         return false;
     }
 
     void Rotate(string direction)
     {
+        // If tank shot or is crashed and trying last move, dont rotate.
+        if ((bullet != null) || (isCrashed)) { return; }
         Matrix4x4 rm;
         switch (direction)
         {
@@ -295,6 +308,8 @@ public class TankController : MonoBehaviour
 
     void Move(string direction)
     {
+        // If tank shot or is crashed and trying last move, dont move.
+        if ((bullet != null) || (isCrashed && previousMove == direction)) { return; }
         Matrix4x4 tm;
         switch (direction)
         {
@@ -314,6 +329,7 @@ public class TankController : MonoBehaviour
                 tm = Transformations.TranslateM(0, 0, 0);
                 break;
         }
+        previousMove = direction;
         ApplyTransformation(tm);
     }
 
@@ -342,6 +358,36 @@ public class TankController : MonoBehaviour
         cameraPoint = allPastTransformations * tempPointCamera;
         mainCamera.transform.position = cameraPoint;
         mainCamera.transform.LookAt(cannonPoint);
+    }
+
+    public bool CheckCrash(TankController tank)
+    {
+        float sumR = this.collisionRadius + tank.collisionRadius;
+        sumR *= sumR;
+        Vector3 c1 = this.centerPoint;
+        Vector3 c2 = tank.centerPoint;
+
+        float dx = c2.x - c1.x;
+        dx *= dx;
+        float dy = c2.y - c1.y;
+        dy *= dy;
+        float dz = c2.z - c1.z;
+        dz *= dz;
+        float d2 = dx + dy + dz;
+
+        bool hit = sumR >= d2;
+
+        if (hit)
+        {
+            this.isCrashed = true;
+            this.tankInfo = "Crashed into: " + tank.playerName + "\nReverse previous movement.";
+        }
+        else
+        {
+            this.isCrashed = false;
+        }
+
+        return hit;
     }
 }
 
